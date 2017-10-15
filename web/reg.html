@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html class="ui-page-login">
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+        <title>用户注册</title>
+        <link href="css/mui.min.css" rel="stylesheet" />
+        <link href="css/style.css" rel="stylesheet" />
+        <link href="css/mui.picker.css" rel="stylesheet" />
+        <link href="css/mui.poppicker.css" rel="stylesheet" />
+
+        <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+        <script type="text/javascript" src="js/jsonp.js"></script>
+        <script type="text/javascript" src="js/jquery-script.js"></script>
+        <style>
+            .area {
+                margin: 20px auto 0px auto;
+            }
+
+            .mui-input-group:first-child {
+                margin-top: 20px;
+            }
+
+            .mui-input-group label {
+                width: 36%;
+            }
+
+            .mui-input-row label~input,
+            .mui-input-row label~select,
+            .mui-input-row label~textarea {
+                width: 64%;
+            }
+
+            .mui-checkbox input[type=checkbox],
+            .mui-radio input[type=radio] {
+                top: 6px;
+            }
+
+            .mui-content-padded {
+                margin-top: 25px;
+            }
+
+            .mui-btn {
+                padding: 5px;
+            }
+
+            .ui-alert {
+                text-align: center;
+                padding: 20px 10px;
+                font-size: 16px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <header class="mui-bar mui-bar-nav">
+            <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+            <h1 class="mui-title">注册</h1>
+        </header>
+        <div class="mui-content">
+            <div class="mui-content-padded">
+                <span class="mui-btn-red">请正确填写用户姓名和身份证号码</span>
+            </div>
+            <form class="mui-input-group">
+                <div class="mui-input-row">
+                    <label>姓名</label>
+                    <input id='name' type="text" class="mui-input-clear mui-input" placeholder="请输入姓名">
+                </div>
+                <div class="mui-input-row">
+                    <label>身份证</label>
+                    <input id='cardNo' type="text" class="mui-input-clear mui-input" placeholder="请输入身份证号码">
+                </div>
+            </form>
+
+            <span class="mui-content-padded">请输入登录信息</span>
+            <form class="mui-input-group">
+                <div class="mui-input-row">
+                    <label><span style="color: red;">* </span>手机号</label>
+                    <input id="account" type="text" class="mui-input-clear mui-input" placeholder="请输入手机号" />
+                    <button id="sendCode" type="button" style="z-index: 1;position: absolute;right: 5px;height: 30px;top: 5px;">发送验证码</button>
+                </div>
+                <div class="mui-input-row">
+                    <label class=""><span style="color: red;">* </span>验证码</label>
+                    <input id="code" type="text" class="mui-input-clear mui-input" placeholder="请输入验证码" />
+                </div>
+                <div class="mui-input-row">
+                    <label class=""><span style="color: red;">* </span>登录密码</label>
+                    <input id="password" type="password" class="mui-input-clear mui-input" placeholder="请输入登录密码" />
+                </div>
+                <div class="mui-input-row">
+                    <label class=""><span style="color: red;">* </span>确认密码</label>
+                    <input id="password_confirm" type="password" class="mui-input-clear mui-input" placeholder="再次输入登录密码" />
+                </div>
+                <div class="mui-input-row mui-hidden">
+                    <label class=""><span style="color: red;">* </span>GPS数据库IP</label>
+                    <input id="gpsDatabaseIp" type="text" class="mui-input-clear mui-input" value="120.192.73.28" placeholder="示例: 120.192.73.28" />
+                </div>
+                <div class="mui-input-row mui-hidden">
+                    <label class=""><span style="color: red;">* </span>GPS数据库端口</label>
+                    <input id="gpsDatabasePort" type="text" class="mui-input-clear mui-input" value="1433" placeholder="示例: 1433" />
+                </div>
+                <div class="mui-input-row mui-hidden">
+                    <label class=""><span style="color: red;">* </span>定位数据接口地址</label>
+                    <input id="gpsServerUrl" type="text" class="mui-input-clear mui-input" value="http://120.192.73.28:8000/webapi/" placeholder="示例: http://120.192.73.28:8000/webapi/" />
+                </div>
+            </form>
+
+            <span class="mui-content-padded">填写地址</span>
+            <form class="mui-input-group">
+                <div class="mui-input-row">
+                    <label>所在地区</label>
+                    <input id="city" type="text" class="mui-input-clear mui-input" readonly="readonly" placeholder="请选择省/市/区(县)" />
+                </div>
+                <div class="mui-input-row">
+                    <input id="detail_address" type="text" class="mui-input-clear mui-input" placeholder="街道/镇+村/小区/写字楼/+门牌号" />
+                </div>
+            </form>
+
+            <div class="mui-input-row mui-checkbox mui-left">
+                <label style="width: 100%;font-size: smaller;">我已经阅读并同意<span style="color: #e28664;">《客户入网服务协议及业务协议》</span></label>
+                <input id="protocol" type="checkbox" name="protocol" />
+            </div>
+
+            <div class="mui-content-padded">
+                <button id='reg' type="button" class="mui-btn mui-btn-block mui-btn-primary">立刻提交</button>
+            </div>
+        </div>
+        <script src="js/mui.min.js"></script>
+        <script src="js/app.js"></script>
+        <script src="js/mui.picker.js"></script>
+        <script src="js/mui.poppicker.js"></script>
+        <script src="js/city.data-3.js" type="text/javascript" charset="utf-8"></script>
+        <script>
+            (function (mui, doc) {
+                mui.init();
+                mui.ready(function () {
+                    var regButton = doc.getElementById('reg');
+                    var accountBox = doc.getElementById('account');
+                    var passwordBox = doc.getElementById('password');
+                    var passwordConfirmBox = doc.getElementById('password_confirm');
+                    var codeBox = doc.getElementById("code");
+                    var name = doc.getElementById("name");
+                    var cardInfo = doc.getElementById("cardNo");
+                    var address = doc.getElementById("city");
+                    var detailAddress = doc.getElementById("detail_address");
+                    var sendCodeBtn = doc.getElementById("sendCode");
+                    var protocol = doc.getElementById("protocol");
+                    var gpsDatabaseIp = doc.getElementById("gpsDatabaseIp");
+                    var gpsDatabasePort = doc.getElementById("gpsDatabasePort");
+                    var gpsServerUrl = doc.getElementById("gpsServerUrl");
+
+                    /**
+                     * 注册提交
+                     */
+                    regButton.addEventListener('tap', function (event) {
+                        if (!protocol.checked) {
+                            mui.toast("未同意注册协议", {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                            return;
+                        }
+                        if (checkRegData()) {
+                            var regInfo = {
+                                loginUserName: accountBox.value,
+                                loginPassword: passwordBox.value,
+                                code: codeBox.value,
+                                customerName: name.value,
+                                customerCardInfo: cardInfo.value,
+                                customerAddress: address.value + detailAddress.value,
+                                customerGPSDatabaseIP: gpsDatabaseIp.value,
+                                customerGPSDatabasePort: gpsDatabasePort.value,
+                                customerGPSServerUrl: gpsServerUrl.value
+                            };
+                            ajaxRequest("HeCheXing/UserReg.action", regInfo, function (data) {
+                                mui.toast(data.message, {
+                                    duration: 'long',
+                                    type: 'div'
+                                });
+                                if (data.status === 0) {
+                                    app.openUrl("login.html");
+                                }
+                            });
+                        }
+                    });
+                    function checkRegData() {
+                        if (!name.value) {
+                            mui.toast('姓名不能为空', {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                            return false;
+                        }
+                        if (!cardInfo.value) {
+                            mui.toast('身份证号码不能为空', {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                            return false;
+                        }
+                        if (!accountBox.value) {
+                            mui.toast('手机号不能为空', {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                            return false;
+                        }
+                        if (!passwordBox.value) {
+                            mui.toast('密码不能为空', {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                            return false;
+                        }
+                        if (!codeBox.value) {
+                            mui.toast('验证码不能为空', {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                            return false;
+                        }
+                        if (!gpsDatabaseIp.value) {
+                            mui.toast('GPS数据库IP', {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                            return false;
+                        }
+                        if (!gpsDatabasePort.value) {
+                            mui.toast('GPS数据库端口', {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                            return false;
+                        }
+                        if (!gpsServerUrl.value) {
+                            mui.toast('定位数据接口地址', {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                            return false;
+                        }
+                        if (!app.checkPhone(accountBox.value)) {
+                            mui.toast('手机号格式不正确', {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                            return false;
+                        }
+                        if (passwordBox.value.length < 6) {
+                            mui.toast('密码最短需要 6 个字符', {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                            return false;
+                        }
+                        if (passwordConfirmBox.value !== passwordBox.value) {
+                            mui.toast('密码两次输入不一致', {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                            return false;
+                        }
+                        return true;
+                    }
+                    /**
+                     * 验证码
+                     */
+                    sendCodeBtn.addEventListener('tap', function (event) {
+                        var amount = 60;
+                        var sendInfo = {
+                            phone: accountBox.value
+                        };
+
+                        if (app.checkPhone(sendInfo.phone)) {
+                            ajaxRequest("SendSMSMessage.action", sendInfo, function (data) {
+                                mui.toast(data.message, {
+                                    duration: 'long',
+                                    type: 'div'
+                                });
+                                if (data.status === 0) {
+                                    sendCodeBtn.disabled = true;
+                                    var intervalId = setInterval(function () {
+                                        sendCodeBtn.innerHTML = amount + "秒后再次获取";
+                                        amount--;
+                                        if (amount === 0) {
+                                            clearInterval(intervalId);
+                                            sendCodeBtn.innerHTML = "发送验证码";
+                                            sendCodeBtn.disabled = false;
+                                        }
+                                    }, 1000);
+                                }
+                            });
+                        } else {
+                            mui.toast('手机号格式不正确', {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                        }
+                    });
+
+                    /**
+                     * 获取对象属性的值
+                     * 主要用于过滤三级联动中，可能出现的最低级的数据不存在的情况，实际开发中需要注意这一点；
+                     * @param {Object} obj 对象
+                     * @param {String} param 属性名
+                     */
+                    var _getParam = function (obj, param) {
+                        return obj[param] || '';
+                    };
+                    var cityPicker = new mui.PopPicker({
+                        layer: 3
+                    });
+                    cityPicker.setData(cityData3);
+                    var city = doc.getElementById('city');
+                    var cityResult = doc.getElementById('cityResult');
+                    city.addEventListener('tap', function (event) {
+                        cityPicker.show(function (items) {
+                            city.value = _getParam(items[0], 'text') + " " + _getParam(items[1], 'text') + " " + _getParam(items[2], 'text');
+                            //返回 false 可以阻止选择框的关闭
+                            //return false;
+                        });
+                    }, false);
+                });
+            })(mui, document);
+        </script>
+    </body>
+
+</html>

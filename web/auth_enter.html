@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+        <title></title>
+        <link href="css/mui.min.css" rel="stylesheet" />
+
+        <style>
+            ul {
+                font-size: 14px;
+                color: #8f8f94;
+            }
+            .mui-btn {
+                padding: 10px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <header class="mui-bar mui-bar-nav" style="padding-right: 15px;">
+            <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+            <h1 class="mui-title">实名认证入网</h1>
+        </header>
+        <div class="mui-content">
+            <div class="mui-content-padded">
+                <h5 style="background-color:#efeff4">新用户入网</h5>
+                <img id="enter_img" class="mui-media-object" src="images/ic_auth.png" style="width: 98%;">
+            </div>
+        </div>
+        <script src="js/mui.min.js"></script>
+        <script src="js/app.js"></script>
+        <script>
+            (function ($, doc) {
+                $.init();
+
+                $.ready(function () {
+                    var enterImg = doc.getElementById('enter_img');
+                    enterImg.addEventListener("tap", function (event) {
+                        app.openUrl('auth_first.html');
+                    });
+                });
+            }(mui, document));
+        </script>
+    </body>
+
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> 
+        <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+        <title>认证结果</title>
+        <link href="css/mui.min.css" rel="stylesheet" />
+
+        <style>
+            ul {
+                font-size: 14px;
+                color: #8f8f94;
+            }
+
+            .mui-btn {
+                padding: 10px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <header class="mui-bar mui-bar-nav" style="padding-right: 15px;">
+            <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+            <h1 class="mui-title">认证结果</h1>
+        </header>
+        <div class="mui-content">
+            <div class="mui-content-padded">
+                <div style="margin-top: 80px;">
+                    <span>尊敬的</span>
+                    <span id="customerName" style="color: #23cfc5;">李佳</span>
+                    <span>已经成功激活</span>
+                    <span id="deviceId" style="color: #23cfc5;">02923092309</span>
+                    <span>现在可以进入车辆列表查看车辆位置信息</span>
+                </div>
+                <div style="float: right;margin-right: 30px;">
+                    <a id="goto_car_list" style="color: #23cfc5;cursor: pointer;">进入车辆列表>></a>
+                </div>
+            </div>
+        </div>
+        <script src="js/mui.min.js"></script>
+        <script src="js/app.js"></script>
+        <script src="js/script.js"></script>
+        <script>
+            (function (mui, doc) {
+                mui.init();
+
+                mui.ready(function () {
+                    var customerName = doc.getElementById('customerName');
+                    var deviceId = doc.getElementById('deviceId');
+                    customerName.innerHTML = getUrlParam('customerName');
+                    deviceId.innerHTML = getUrlParam('deviceId');
+                    
+                    var goCarList = doc.getElementById('goto_car_list');
+                    goCarList.addEventListener("tap", function (event) {
+                        app.openUrl('car_list_main.html');
+                    });
+                });
+            }(mui, document));
+        </script>
+    </body>
+
+</html>

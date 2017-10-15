@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+        <title>认证激活</title>
+        <link href="css/mui.min.css" rel="stylesheet" />
+        <link href="css/style.css" rel="stylesheet" />
+
+        <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+        <script type="text/javascript" src="js/jsonp.js"></script>
+        <script type="text/javascript" src="js/jquery-script.js"></script>
+        <style>
+            ul {
+                font-size: 14px;
+                color: #8f8f94;
+            }
+
+            .mui-btn {
+                padding: 5px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <header class="mui-bar mui-bar-nav" style="padding-right: 15px;">
+            <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+            <h1 class="mui-title">认证激活</h1>
+        </header>
+        <div class="mui-content">
+            <img class="mui-media-object" src="images/ic_auth_first.png" style="width: 100%;">
+
+            <!--认证第一步, 绑定设备ID号-->
+            <div id="auth_first">
+                <div class="mui-content-padded">
+                    <span>请输入设备编号进行认证</span>
+                </div>
+
+                <form class="mui-input-group">
+                    <div class="mui-input-row">
+                        <label>认证ID</label>
+                        <input id="deviceId" type="text" placeholder="输入设备上的ID号">
+                    </div>
+                </form>
+                <img class="mui-media-object" src="images/ic_auth_code.png" style="width: 50%;margin-left: 25%;margin-top: 20px;">
+
+                <div class="mui-content-padded">
+                    <label style="font-size: small;">您收到<span style="color: #23cfc5;">《和车行定位设备》</span>在设备的后方印有相关内容，用于设备和您的用户进行绑定，绑定后可以查看车辆位置。</label>
+                </div>
+
+                <div class="mui-content-padded">
+                    <button id='first_next' class="mui-btn mui-btn-block mui-btn-primary">下一步</button>
+                </div>
+            </div>
+
+            <!--认证第二步, 如果设备已经被绑定, 需发送验证码-->
+            <div id="auth_verify" class="mui-hidden">
+                <div class="mui-content-padded">
+                    <label style="font-size: smaller;" id="bandPromote">您绑定的设备已被其他用户绑定, 请验证</label>
+                    <button id='sendCode' class="mui-btn mui-btn-block mui-btn-primary">获取验证码</button>
+                </div>
+                <div class="mui-input-row">
+                    <input id="verify_code" type="text" placeholder="请输入验证码">
+                    <button id="verify" class="mui-btn-primary mui-hidden" style="z-index: 1;position: absolute;right: 5px;height: 30px;top: 5px;">验证</button>
+                    <div class="link-area" style="float: right;margin-right: 30px;">
+                        <a>收不到验证码?</a>
+                    </div>
+                </div>
+                <div class="mui-content-padded">
+                    <label style="font-size: small;">您收到<span style="color: #23cfc5;">《和车行定位设备》</span>在设备的后方印有相关内容，用于设备和您的用户进行绑定，绑定后可以查看车辆位置。</label>
+                </div>
+
+                <div class="mui-content-padded">
+                    <button id='verify_next' class="mui-btn mui-btn-block mui-btn-primary">下一步</button>
+                </div>
+            </div>
+
+
+        </div>
+        <script src="js/mui.min.js"></script>
+        <script src="js/app.js"></script>
+        <script>
+            (function (mui, doc) {
+                mui.init();
+
+                mui.ready(function () {
+                    var firstAuthDiv = doc.getElementById('auth_first');
+                    var verifyAuthDiv = doc.getElementById('auth_verify');
+                    firstAuthDiv.className = '';
+                    verifyAuthDiv.className = 'mui-hidden';
+
+                    var deviceId = doc.getElementById('deviceId');
+                    var verifyCode = doc.getElementById('verify_code');
+                    var firstNextBtn = doc.getElementById('first_next');
+                    var verifyNextBtn = doc.getElementById('verify_next');
+                    var sendCodeBtn = doc.getElementById("sendCode");
+                    var ownerCustomer;
+
+                    firstNextBtn.addEventListener("tap", function (event) {
+                        var deviceInfo = {
+                            deviceID: deviceId.value
+                        };
+                        ajaxRequest("VerifyDeviceID.action", deviceInfo, function (data) {
+                            mui.toast(data.message, {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                            if (data.status === 0) {
+                                app.openUrl('auth_second.html?deviceId=0' + deviceId.value);
+                            } else if (data.status === 2) {
+                                firstAuthDiv.className = 'mui-hidden';
+                                verifyAuthDiv.className = '';
+                                ownerCustomer = data.data;
+                                doc.getElementById('bandPromote').innerHTML = '您绑定的设备' + ownerCustomer.deviceID + '已被其他用户绑定, 请验证';
+                            }
+                        });
+                    });
+                    /**
+                     * 发送验证码
+                     */
+                    sendCodeBtn.addEventListener('tap', function () {
+                        mui.confirm('是否确认给车主发送验证码?', '绑定确认', ['是', '否'], function (e) {
+                            if (e.index === 0) {
+                                var amount = 60;
+                                var sendInfo = {
+                                    owner: ownerCustomer
+                                };
+                                ajaxRequest("SendVerifySMSMessage.action", sendInfo, function (data) {
+                                    mui.toast(data.message, {
+                                        duration: 'long',
+                                        type: 'div'
+                                    });
+                                    if (data.status === 0) {
+                                        sendCodeBtn.disabled = true;
+                                        var intervalId = setInterval(function () {
+                                            sendCodeBtn.innerHTML = amount + "秒后再次获取";
+                                            amount--;
+                                            if (amount === 0) {
+                                                clearInterval(intervalId);
+                                                sendCodeBtn.innerHTML = "发送验证码";
+                                                sendCodeBtn.disabled = false;
+                                            }
+                                        }, 1000);
+                                    }
+                                });
+                            }
+                        });
+                    });
+
+                    verifyNextBtn.addEventListener("tap", function (event) {
+                        var codeInfo = {
+                            code: verifyCode.value
+                        };
+                        ajaxRequest("VerifyCode.action", codeInfo, function (data) {
+                            mui.toast(data.message, {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                            if (data.status === 0) {
+                                app.openUrl('auth_second.html?deviceId=0' + deviceId.value);
+                            }
+                        });
+                    });
+                });
+            }(mui, document));
+        </script>
+    </body>
+
+</html>

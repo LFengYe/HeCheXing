@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html class="ui-page-login">
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+        <title></title>
+        <link href="css/mui.min.css" rel="stylesheet" />
+        <link href="css/style.css" rel="stylesheet" />
+
+        <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+        <script type="text/javascript" src="js/jsonp.js"></script>
+        <script type="text/javascript" src="js/jquery-script.js"></script>
+        <script type="text/javascript" src="js/mui.min.js"></script>
+        <script type="text/javascript" src="js/app.js"></script>
+
+        <style>
+            .mui-input-group:first-child {
+                margin-top: 20px;
+            }
+
+            .mui-input-group label {
+                width: 30%;
+            }
+
+            .mui-input-row:first-child {
+                margin-top: 10px;
+            }
+
+            .mui-input-row label~input,
+            .mui-input-row label~select,
+            .mui-input-row label~textarea {
+                width: 70%;
+            }
+
+            .mui-checkbox input[type=checkbox],
+            .mui-radio input[type=radio] {
+                top: 6px;
+            }
+
+            .mui-content-padded {
+                margin-top: 25px;
+            }
+
+            .mui-btn {
+                padding: 5px;
+            }
+
+            .mui-input-row label~input,
+            .mui-input-row label~select,
+            .mui-input-row label~textarea {
+                margin-top: 1px;
+            }
+
+            .mui-media-object-div {
+                height: 25px;
+                line-height: 25px;
+                margin-left: 25px;
+            }
+
+            .mui-media-object-img {
+                height: 25px;
+                line-height: 25px;
+                max-width: 25px;
+            }
+        </style>
+        <script type="text/javascript">
+            function carLocalDetail(systemNo) {
+                //app.openUrl('car_local.html?normal=' + systemNo);
+                mui.openWindow({
+                    url: 'car_local.html?normal=' + systemNo,
+                    id: 'car_local',
+                    preload: true,
+                    show: {
+                        aniShow: 'pop-in'
+                    },
+                    styles: {
+                        popGesture: 'hide'
+                    },
+                    waiting: {
+                        autoShow: false
+                    }
+                });
+            }
+            function addDevice() {
+                app.openUrl('auth_enter.html');
+            }
+        </script>
+    </head>
+
+    <body>
+        <div id="refreshContainer" class="mui-content mui-scroll-wrapper">
+            <div class="mui-scroll">
+                <!--数据列表-->
+                <ul class="mui-table-view">
+
+                </ul>
+            </div>
+        </div>
+        <script>
+            (function (mui, doc) {
+                var pageSize = 15;
+                var pageIndex = 0;
+
+                mui.init({
+                    pullRefresh: {
+                        container: "#refreshContainer",
+                        down: {
+                            style: 'circle', //必选，下拉刷新样式，目前支持原生5+ ‘circle’ 样式
+                            callback: pulldownRefresh //必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+                        },
+                        up: {
+                            contentrefresh: '正在加载...',
+                            callback: pullupRefresh() //必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+                        }
+                    }
+                });
+
+                /**
+                 * 下拉刷新具体业务实现
+                 */
+                function pulldownRefresh() {
+                    var table = doc.body.querySelector('.mui-table-view');
+                    pageIndex = 1;
+                    var request = {
+                        pageSize: pageSize,
+                        pageIndex: pageIndex
+                    };
+                    ajaxRequest("GetCustomerDevice.action", request, function (data) {
+                        //console.log("down:" + data);
+                        if (data.status === 0) {
+                            var cells = doc.body.querySelectorAll('.mui-table-view-cell');
+                            for (var i = 0; i < cells.length; i++) {
+                                table.removeChild(cells[i]);
+                            }
+                            for (var i = 0; i < data.data.length; i++) {
+                                var item = data.data[i];
+                                (function (item) {
+                                    var li = doc.createElement('li');
+                                    li.className = 'mui-table-view-cell';
+                                    li.innerHTML = createItemHtml(item);
+                                    var deviceID = item.deviceID;
+                                    li.addEventListener('tap', function () {
+                                        carLocalDetail(deviceID);
+                                    });
+                                    table.appendChild(li);
+                                })(item);
+                            }
+                        } else {
+                            mui.toast(data.message, {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                        }
+                        mui('#refreshContainer').pullRefresh().endPulldownToRefresh(); //refresh completed
+                    });
+                }
+                /**
+                 * 上拉加载具体业务实现
+                 */
+                function pullupRefresh() {
+                    var table = doc.body.querySelector('.mui-table-view');
+                    pageIndex = pageIndex + 1;
+                    var request = {
+                        pageSize: pageSize,
+                        pageIndex: pageIndex
+                    };
+                    ajaxRequest("GetCustomerDevice.action", request, function (data) {
+                        if (data.message) {
+                            mui.toast(data.message, {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                        }
+                        if (data.status === 0) {
+                            for (var i = 0; i < data.data.length; i++) {
+                                var item = data.data[i];
+                                (function (item) {
+                                    var li = doc.createElement('li');
+                                    li.className = 'mui-table-view-cell';
+                                    li.innerHTML = createItemHtml(item);
+                                    var deviceID = item.deviceID;
+                                    li.addEventListener('tap', function () {
+                                        carLocalDetail(deviceID);
+                                    });
+                                    table.appendChild(li);
+                                })(item);
+
+                            }
+                            mui('#refreshContainer').pullRefresh().endPullupToRefresh(false); //参数为true代表没有更多数据了。
+                        } else {
+                            mui('#refreshContainer').pullRefresh().endPullupToRefresh(true); //参数为true代表没有更多数据了。
+                        }
+                    });
+                }
+                function createItemHtml(item) {
+//                    var htmlStr = '<a href="javascript:carLocalDetail(\'' + item.deviceID + '\');" class="mui-navigate-right">';
+                    var htmlStr = '<a href="javascript:void();" class="mui-navigate-right">';
+                    htmlStr += '<img class="mui-media-object-img mui-pull-left" src="images/ic_list_car.png">';
+                    htmlStr += '<div class="mui-media-object-div">';
+                    htmlStr += '<div style="display: inline-block;">' + item.carNo + '</div>';
+                    //htmlStr += '<div style="display: inline-block;margin-left: 30%;">今天 13:11:11</div>';
+                    htmlStr += '</div>';
+                    htmlStr += '</a>';
+                    return htmlStr;
+                }
+            }(mui, document));
+        </script>
+    </body>
+
+</html>

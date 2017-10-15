@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html class="ui-page-login">
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+        <title>轨迹回放</title>
+        <link href="css/mui.min.css" rel="stylesheet" />
+        <link href="css/style.css" rel="stylesheet" />
+        <link  rel="stylesheet" type="text/css" href="http://api.map.baidu.com/library/TrafficControl/1.4/src/TrafficControl_min.css"/>
+        <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=G9z0ootWtvxQnRMpqojKjzcI"></script>
+        <script type="text/javascript" src="http://api.map.baidu.com/getscript?v=1.4&ak=&services=&t=20150522093217"></script>
+        <script type="text/javascript" src="http://api.map.baidu.com/library/TrafficControl/1.4/src/TrafficControl_min.js"></script>
+        <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+        <script type="text/javascript" src="js/jsonp.js"></script>
+        <script type="text/javascript" src="js/underscore-min.js"></script>
+        <script type="text/javascript" src="js/convert.js"></script>
+        <script type="text/javascript" src="js/jquery-script.js"></script>
+        <script type="text/javascript" src="js/script.js"></script>
+        <style>
+            #mapview {
+                width: 100%;
+                height: 100%;
+            }
+            #speedBar {
+                background-color: #ffffff;
+                width: 100%;
+                position: absolute;
+                bottom: 0px;
+                z-index: 99;
+            }
+        </style>
+    </head>
+
+    <body>
+        <header class="mui-bar mui-bar-nav">
+            <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+            <h1 class="mui-title">轨迹回放</h1>
+        </header>
+        <div class="mui-content">
+            <div id="mapview"></div>
+            <div id="speedBar" class="mui-input-row mui-input-range">
+                <label>回放速度:</label>
+                <input type="range" min="1" max="5">
+            </div>
+        </div>
+        <script src="js/mui.min.js"></script>
+        <script src="js/app.js"></script>
+        <script>
+            (function (mui, doc) {
+                var allPoints = [];
+                var convertNum = 1;
+                var timeInterval = 30 * 60 * 1000;
+                var systemNoCount = 0;
+
+                mui.init();
+                mui.ready(function () {
+                    var bmap = new BMap.Map("mapview"); //创建地图实例
+                    mapInit(bmap);
+                    initData(bmap);
+                });
+
+                function mapInit(mapview) {
+                    mapview.centerAndZoom(new BMap.Point(125.33057, 43.901212), 11);
+                    mapview.setMinZoom(5);
+                    mapview.enableScrollWheelZoom(); // 允许滚轮缩放
+                    //mapview.addControl(new BMap.NavigationControl()); //添加地图的平移缩放控件，可以对地图进行上下左右四个方向的平移和缩放操作。
+                    //bmap.addControl(new BMap.ScaleControl());//添加地图比例尺控件
+                    //bmap.addControl(new BMap.OverviewMapControl());//添加缩略地图控件
+                    //添加地图类型切换控件(普通街道图，卫星视图，卫星和路网混合视图；去除三维图)
+                    mapview.addControl(new BMap.MapTypeControl({
+                        mapTypes: [BMAP_NORMAL_MAP, BMAP_SATELLITE_MAP, BMAP_HYBRID_MAP]
+                    }));
+                }
+
+                function initData(bmap) {
+                    var start = getUrlParam("start");
+                    var end = getUrlParam("end");
+                    var normalSysNo = getUrlParam("normal");
+                    var expiredSysNo = getUrlParam("expired");
+                    if (dateIsCorrect(start, end)) {
+                        var sepDates = separateDate(start, end);
+                        if (normalSysNo) {
+                            var normalSysNos = normalSysNo.split("-");
+                            systemNoCount += normalSysNos.length;
+                            for (var index in normalSysNos) {
+                                var pointArray = [];
+                                var myIcon = new BMap.Icon("images/icon_center_point.png", new BMap.Size(24, 24), {offset: new BMap.Size(12, 12)});
+                                var marker = new BMap.Marker(pointArray[0], {icon: myIcon});
+                                getTrackData(bmap, marker, {color: "blue", info: normalSysNos[index], sepDates: sepDates, index: 0});
+                            }
+                        }
+
+                        if (expiredSysNo) {
+                            var expiredSysNos = expiredSysNo.split("-");
+                            systemNoCount += expiredSysNos.length;
+                            for (var index in expiredSysNos) {
+                                //var data = {systemNo: expiredSysNos[index], start: start, end: end};
+                                var pointArray = [];
+                                var myIcon = new BMap.Icon("images/icon_center_point.png", new BMap.Size(24, 24), {offset: new BMap.Size(12, 12)});
+                                var marker = new BMap.Marker(pointArray[0], {icon: myIcon});
+                                getTrackData(bmap, marker, {color: "red", info: normalSysNos[index], sepDates: sepDates, index: 0});
+                                //getTrackData(expiredSysNos[index], sepDates, 0, pointArray, bmap, "red", marker);
+                            }
+                        }
+                    }
+                }
+
+                function dateIsCorrect(start, end) {
+                    if (!start || !end) {
+                        alert('起止时间不能为空!');
+                        return false;
+                    }
+                    try {
+                        var startTime = Date.parse(start);
+                        var endTime = Date.parse(end);
+                        //console.log(startTime + "," + endTime);
+                        if (!startTime && !endTime) {
+                            alert("日期格式不正确");
+                            return false;
+                        }
+                        if (startTime >= endTime) {
+                            alert("开始日期必须小于结束日期");
+                            return false;
+                        }
+                        /*
+                         if (endTime - startTime > 24 * 60 * 60 * 1000) {
+                         alert("轨迹查询区间不能大于24小时");
+                         return false;
+                         }
+                         */
+                    } catch (err) {
+                        alert("日期字符串格式不正确");
+                        return false;
+                    }
+                    return true;
+                }
+                function separateDate(start, end) {
+                    var sepDates = [];
+                    var startTime = Date.parse(start);
+                    var endTime = Date.parse(end);
+                    var startDate = new Date();
+                    var endDate = new Date();
+
+                    while (startTime < endTime) {
+                        if (startTime + timeInterval < endTime) {
+                            startDate.setTime(startTime);
+                            startTime = startTime + timeInterval;
+                            endDate.setTime(startTime);
+                            var obj = {start: startDate.format("yyyy-MM-dd hh:mm:ss"), end: endDate.format("yyyy-MM-dd hh:mm:ss")};
+                        } else {
+                            startDate.setTime(startTime);
+                            startTime = endTime;
+                            endDate.setTime(startTime);
+                            var obj = {start: startDate.format("yyyy-MM-dd hh:mm:ss"), end: endDate.format("yyyy-MM-dd hh:mm:ss")};
+                        }
+                        sepDates.push(obj);
+                    }
+                    return sepDates;
+                }
+
+                function getTrackData(mapview, marker, option) {
+                    var pointArray = [];
+                    var data = {systemNo: option.info, start: option.sepDates[option.index].start, end: option.sepDates[option.index].end};
+                    ajaxRequest("LoadHistoryData.action", data, function (data) {
+                        if (data.data) {
+                            var datas = JSON.parse(data.data).Data;
+                            for (var i in datas) {
+                                var location = datas[i];
+                                if (location.Lon < 1.0 || location.Lat < 1.0 || location.Speed < 2.0)
+                                    continue;
+                                var point = new BMap.Point(location.Lon, location.Lat);
+                                pointArray.push(point);
+                            }
+                        }
+                        if (option.index < option.sepDates.length - 1) {
+                            if (pointArray.length > 0) {
+                                addLine(pointArray, mapview, marker, option);
+                            } else {
+                                option.index = option.index + 1;
+                                getTrackData(mapview, marker, option);
+                            }
+                        } else {
+                            alert("回放完毕");
+                        }
+                    });
+                }
+                function addLine(pointArray, mapview, marker, option) {
+                    //console.log(pointArray);
+                    convertCallBack(pointArray, 0, mapview, option, marker);
+                }
+                function adapterViewPort(pointArray, mapview) {
+                    for (var index in pointArray) {
+                        allPoints.push(pointArray[index]);
+                    }
+                    var viewport = mapview.getViewport(allPoints);
+                    mapview.setViewport(viewport);
+                }
+                var oldPoint;
+                function convertCallBack(pointArray, convertIndex, mapview, option, marker) {
+                    var data, isFinished, endPosition;
+                    if (pointArray.length > convertIndex + convertNum) {
+                        data = {points: pointArray.slice(convertIndex, convertIndex + convertNum)};
+                        endPosition = convertIndex + convertNum;
+                        isFinished = false;
+                    } else {
+                        data = {points: pointArray.slice(convertIndex)};
+                        endPosition = pointArray.length;
+                        isFinished = true;
+                    }
+
+                    ajaxRequest("convertLatLng.action", data, function (data) {
+                        var convertRes = JSON.parse(data.data);
+                        if (convertRes.status == 0) {
+                            for (var i in convertRes.result) {
+                                var point = new BMap.Point(convertRes.result[i].x, convertRes.result[i].y);
+                                if (!mapview.getBounds().containsPoint(point) && systemNoCount === 1) {
+                                    mapview.setCenter(point);
+                                }
+                                var pIndex = parseInt(convertIndex) + parseInt(i);
+                                pointArray[pIndex] = point;
+                            }
+                            /*绘制轨迹*/
+                            var polyline;
+                            if (convertIndex > 0) {
+                                polyline = new BMap.Polyline(pointArray.slice(convertIndex - 1, endPosition), {strokeColor: option.color, strokeWeight: 5, strokeOpacity: 0});
+                            } else {
+                                var tmpPoints = pointArray.slice(convertIndex, endPosition);
+                                if (option.oldPoint) {
+                                    tmpPoints.splice(0, 0, option.oldPoint);
+                                }
+                                polyline = new BMap.Polyline(tmpPoints, {strokeColor: option.color, strokeWeight: 5, strokeOpacity: 0});
+                            }
+                            mapview.addOverlay(polyline);
+                            if (marker) {
+                                marker.setPosition(pointArray[endPosition - 1]);
+                                mapview.addOverlay(marker);
+                            }
+
+                            /*如果转换完成则获取下个时间段的轨迹数据, 否则继续转换*/
+                            if (!isFinished) {
+                                setTimeout(function () {
+                                    //继续坐标转换
+                                    convertCallBack(pointArray, endPosition, mapview, option, marker);
+                                }, 200);
+                            } else {
+                                //转换完成
+                                oldPoint = pointArray[endPosition - 1];
+                                option.index = option.index + 1;
+                                option.oldPoint = oldPoint;
+                                getTrackData(mapview, marker, option);
+                            }
+                        } else {
+                            alert("坐标转换失败");
+                        }
+                    });
+                }
+
+            }(mui, document));
+        </script>
+    </body>
+
+</html>

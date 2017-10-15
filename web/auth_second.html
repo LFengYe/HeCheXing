@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+        <title>认证激活</title>
+        <link href="css/mui.min.css" rel="stylesheet" />
+        <link href="css/style.css" rel="stylesheet" />
+        <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+        <script type="text/javascript" src="js/jsonp.js"></script>
+        <script type="text/javascript" src="js/script.js"></script>
+        <script type="text/javascript" src="js/jquery-script.js"></script>
+        <style>
+            .input-label-img {
+                background-repeat: no-repeat;
+                background-size: 25px 25px;
+                background-position-y: center;
+            }
+
+            .input-label {}
+
+            .mui-btn {
+                padding: 5px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <header class="mui-bar mui-bar-nav" style="padding-right: 15px;">
+            <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+            <h1 class="mui-title">认证激活</h1>
+        </header>
+        <div class="mui-content">
+            <img class="mui-media-object" src="images/ic_auth_second.png" style="width: 100%;">
+            <div class="mui-content-padded">
+                <span>请输入您的电动车资料</span><span style="color: red;">(带有*为必填项)</span>
+            </div>
+            <form class="mui-input-group">
+                <div class="mui-input-row">
+                    <label>车辆品牌</label>
+                    <input id="carBrand" type="text" placeholder="输入车辆品牌">
+                </div>
+                <div class="mui-input-row">
+                    <label>车辆型号</label>
+                    <input id="carType" type="text" placeholder="输入车辆型号">
+                </div>
+                <div class="mui-input-row">
+                    <label>大架号</label>
+                    <input id="griderNum" type="text" placeholder="输入大架号">
+                </div>
+                <div class="mui-input-row">
+                    <label>购买日期</label>
+                    <input id="buyTime" type="date" placeholder="输入购买日期">
+                </div>
+                <div class="mui-input-row">
+                    <label>购买金额</label>
+                    <input id="buyAmount" type="text" placeholder="输入购买金额">
+                </div>
+                <div class="mui-input-row">
+                    <label><span style="color: red;">* </span>车牌号</label>
+                    <input id="carNo" type="text" placeholder="输入车牌号">
+                </div>
+            </form>
+
+            <div class="mui-content-padded">
+                <button id="submit" class="mui-btn mui-btn-block mui-btn-primary">提交</button>
+            </div>
+        </div>
+        <script src="js/mui.min.js"></script>
+        <script src="js/app.js"></script>
+        <script>
+            (function (mui, doc) {
+                mui.init();
+
+                mui.ready(function () {
+                    var carBrand = doc.getElementById('carBrand');
+                    var carType = doc.getElementById('carType');
+                    var griderNum = doc.getElementById('griderNum');
+                    var buyTime = doc.getElementById('buyTime');
+                    var buyAmount = doc.getElementById('buyAmount');
+                    var carNo = doc.getElementById('carNo');
+                    var submitBtn = doc.getElementById('submit');
+                    var deviceID = getUrlParam('deviceId');
+
+                    submitBtn.addEventListener("tap", function (event) {
+                        var deviceInfo = {
+                            deviceID: deviceID,
+                            carBrand: carBrand.value,
+                            carType: carType.value,
+                            griderNum: griderNum.value,
+                            buyTime: buyTime.value,
+                            buyAmount: buyAmount.value,
+                            carNo: carNo.value
+                        };
+                        ajaxRequest("AddCustomerDevice.action", deviceInfo, function (data) {
+                            mui.toast(data.message, {
+                                duration: 'long',
+                                type: 'div'
+                            });
+                            if (data.status === 0) {
+                                app.openUrl('auth_result.html?deviceId=' + deviceID + '&customerName=' + escape(data.data));
+                            }
+                        });
+                    });
+                });
+            }(mui, document));
+        </script>
+    </body>
+
+</html>

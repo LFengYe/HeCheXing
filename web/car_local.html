@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html class="ui-page-login">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+        <title>车辆位置</title>
+        <link href="css/mui.min.css" rel="stylesheet" />
+        <link href="css/style.css" rel="stylesheet" />
+        <link href="css/mui.picker.css" rel="stylesheet" />
+        <link href="css/mui.poppicker.css" rel="stylesheet" />
+        <link rel="stylesheet" type="text/css" href="http://api.map.baidu.com/library/TrafficControl/1.4/src/TrafficControl_min.css" />
+        <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=G9z0ootWtvxQnRMpqojKjzcI"></script>
+        <script type="text/javascript" src="http://api.map.baidu.com/library/TrafficControl/1.4/src/TrafficControl_min.js"></script>
+        <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+        <script type="text/javascript" src="js/jsonp.js"></script>
+        <script type="text/javascript" src="js/underscore-min.js"></script>
+        <script type="text/javascript" src="js/convert.js"></script>
+        <script type="text/javascript" src="js/jquery-script.js"></script>
+        <script type="text/javascript" src="js/script.js"></script>
+        <style>
+            #mapview {
+                width: 100%;
+                height: 100%;
+            }
+
+            .float_address {
+                position: absolute;
+                height: 20px;
+                line-height: 20px;
+                font-size: 12px;
+                z-index: 99;
+                margin-top: 5px;
+                background-color: #ffffff;
+            }
+
+            .mui-btn {
+                margin-top: 10px;
+                margin-left: 10px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <header class="mui-bar mui-bar-nav">
+            <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+            <h1 class="mui-title">车辆列表</h1>
+            <a id="refresh_set" class="mui-pull-right" style="font-size: smaller;line-height: 44px;">刷新设置</a>
+        </header>
+        <div class="mui-content">
+            <div class="float_address">
+                <span id="refresh_promote" style="color: red;">10</span>
+                <span>秒后刷新</span>
+            </div>
+            <div style="float: right;z-index: 99;position: absolute;right: 5px;margin-top: 30px;">
+                <ul style="list-style: none;">
+                    <li>
+                        <button id="road_condition" type="button" class="mui-btn mui-icon ">
+                            <img alt="" src="images/ic_local_road_condition.png" style="width: 20px;" />
+                        </button>
+                    </li>
+                    <li>
+                        <button id="protect_on" type="button" class="mui-btn mui-icon">
+                            <img alt="" src="images/ic_local_protect_on.png" style="width: 20px;" />
+                        </button>
+                    </li>
+                    <li>
+                        <button id="protect_off" type="button" class="mui-btn mui-icon">
+                            <img alt="" src="images/ic_local_protect_off.png" style="width: 20px;" />
+                        </button>
+                    </li>
+                    <li>
+                        <button id="local_history" type="button" class="mui-btn mui-icon">
+                            <img alt="" src="images/ic_local_history.png" style="width: 20px;" />
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div id="mapview"></div>
+            <input id="timeCount" type="hidden" value="10" name="刷新时间间隔"/>
+        </div>
+        <script src="js/mui.min.js"></script>
+        <script src="js/app.js"></script>
+        <script src="js/mui.picker.js"></script>
+        <script src="js/mui.poppicker.js"></script>
+        <script>
+            (function (mui, doc) {
+                var bmap;
+                var markers = [];
+                var address;
+                var timeCount = doc.getElementById('timeCount').value;
+                var refreshSet = doc.getElementById('refresh_set');
+                var mapView = doc.getElementById("mapview");
+                var refreshPromote = doc.getElementById('refresh_promote');
+                bmap = new BMap.Map("mapview"); //创建地图实例
+                mapInit(bmap);
+
+                mui.init({
+                    //doubletap: true
+                });
+                mui.ready(function () {
+                    initData();
+
+                    var refreshPicker = new mui.PopPicker();
+                    refreshPicker.setData([
+                        {value: '10', text: '10秒'},
+                        {value: '30', text: '30秒'},
+                        {value: '60', text: '60秒'},
+                        {value: '180', text: '3分钟'},
+                        {value: '300', text: '5分钟'},
+                        {value: '600', text: '10分钟'}
+                    ]);
+                    refreshSet.addEventListener('tap', function (event) {
+                        refreshPicker.show(function (items) {
+                            doc.getElementById('timeCount').value = items[0].value;
+                            timeCount = items[0].value;
+                        });
+                    });
+                });
+
+                function mapInit(mapview) {
+                    mapview.centerAndZoom(new BMap.Point(125.33057, 43.901212), 15);
+                    mapview.setMinZoom(5);
+                    mapview.enableScrollWheelZoom(); // 允许滚轮缩放
+                    mapview.addControl(new BMap.NavigationControl()); //添加地图的平移缩放控件，可以对地图进行上下左右四个方向的平移和缩放操作。
+                    //bmap.addControl(new BMap.ScaleControl());//添加地图比例尺控件
+                    //bmap.addControl(new BMap.OverviewMapControl());//添加缩略地图控件
+                    //添加地图类型切换控件(普通街道图，卫星视图，卫星和路网混合视图；去除三维图)
+                    mapview.addControl(new BMap.MapTypeControl({
+                        mapTypes: [BMAP_NORMAL_MAP, BMAP_SATELLITE_MAP, BMAP_HYBRID_MAP]
+                    }));
+                }
+                function initData() {
+                    var normalSysNo = getUrlParam("normal");
+                    if (normalSysNo) {
+                        var normalSysNos = normalSysNo.split(",");
+                        for (var index in normalSysNos) {
+                            getLocationInfo(normalSysNos[index], markers[index], bmap, {color: "blue"});
+                        }
+                        setInterval(function () {
+                            refreshPromote.innerHTML = timeCount;
+                            timeCount--;
+                            if (timeCount <= 0) {
+                                timeCount = doc.getElementById('timeCount').value;
+                                for (var index in normalSysNos) {
+                                    getLocationInfo(normalSysNos[index], index, bmap, {color: "blue"});
+                                }
+                            }
+                        }, 1000);
+                    }
+                }
+                function getLocationInfo(systemNo, index, mapview, option) {
+                    var data = {systemNo: systemNo};
+                    ajaxRequest("GetDevicePosition.action", data, function (data) {
+                        //console.log(data);
+                        if (data.data) {
+                            addLocation(data.data, mapview, index, option);
+                        } else {
+                            alert("系统编号输入错误!");
+                        }
+                    });
+                }
+                function addLocation(location, mapview, index, option) {
+                    var point = new BMap.Point(location.longitude, location.latitude);
+                    var myGeo = new BMap.Geocoder();
+                    myGeo.getLocation(point, function (result) {
+                        //console.log(result.addressComponents);
+                        address = result.address;
+                    });
+                    var pointArray = [];
+                    pointArray.push(point);
+                    ajaxRequest("convertLatLng.action", {points: pointArray}, function (data) {
+                        var convertRes = JSON.parse(data.data);
+                        if (convertRes.status == 0) {
+                            point = new BMap.Point(convertRes.result[0].x, convertRes.result[0].y);
+                            mapview.setCenter(point);
+                            if (markers[index]) {
+                                markers[index].setPosition(point);
+                            } else {
+                                var icon;
+                                if (option.color === "blue") {
+                                    icon = new BMap.Icon("images/ic_car.png", new BMap.Size(64, 64), {anchor: new BMap.Size(32, 64)});
+                                }
+                                if (option.color === "red") {
+                                    icon = new BMap.Icon("images/ic_car.png", new BMap.Size(64, 64), {anchor: new BMap.Size(32, 64)});
+                                }
+                                markers[index] = new BMap.Marker(point, {icon: icon});
+                            }
+                            
+                            /*
+                            if (!markers[index].getLabel()) {
+                                var label = new BMap.Label(location.carNo, {offset: new BMap.Size(0, 0)});
+                                markers[index].setLabel(label);
+                            } else {
+                                //marker.setLabel(label);
+                            }
+                            */
+                            var infoContent = "<div><table>" +
+                                    "<tr><td>车号:</td><td>" + location.carNo + "</td></tr>" +
+                                    "<tr><td>时间:</td><td>" + location.time + "</td></tr>" +
+                                    "<tr><td>状态:</td><td>" + (location.locate ? "定位" : "不定位") + "</td></tr>" +
+                                    "<tr><td>速度:</td><td>" + location.velocity + "km/h</td></tr>" +
+                                    "<tr><td>油量:</td><td>" + location.oil + "L | 温度:" + location.temperature + "℃</td></tr>" +
+                                    "<tr><td>地址:</td><td>" + address + "</td></tr>" +
+                                    "</table></div>";
+                            markers[index].addEventListener("click", function () {
+                                var infoWindow = new BMap.InfoWindow(infoContent);
+                                mapview.openInfoWindow(infoWindow, point);
+                            });
+                            mapview.addOverlay(markers[index]);
+                            var infoWindow = new BMap.InfoWindow(infoContent);
+                            mapview.openInfoWindow(infoWindow, point);
+                        } else {
+                            //alert("坐标转换失败");
+                        }
+                    });
+                }
+
+                doc.getElementById('road_condition').addEventListener("tap", function (event) {
+
+                });
+                doc.getElementById('protect_on').addEventListener("tap", function (event) {
+
+                });
+                doc.getElementById('protect_off').addEventListener("tap", function (event) {
+
+                });
+                doc.getElementById('local_history').addEventListener("tap", function (event) {
+                    app.openUrlNoTimeOut('time_set.html?deviceId=' + getUrlParam("normal"));
+                });
+            }(mui, document));
+        </script>
+    </body>
+
+</html>
