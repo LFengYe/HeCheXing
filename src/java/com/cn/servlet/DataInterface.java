@@ -11,12 +11,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.cn.bean.Customer;
 import com.cn.bean.CustomerDevice;
 import com.cn.bean.NewestPosition;
-import com.cn.bean.SMSResult;
+import com.cn.bean.xml.SMSResult;
 import com.cn.bean.Vehicles;
 import com.cn.controller.CommonController;
 import com.cn.controller.GPSController;
 import com.cn.controller.SMSController;
-import com.cn.handler.SMSResultHandler;
+import com.cn.xml.handler.SMSResultHandler;
 import com.cn.util.DatabaseOpt;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -149,7 +149,6 @@ public class DataInterface extends HttpServlet {
 
                     SMSController controller = new SMSController();
                     String result = controller.sendSMSMessage(mobile, content);
-                    System.out.println(result);
                     ByteArrayInputStream stream = new ByteArrayInputStream(result.getBytes("UTF-8"));
                     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
                     SMSResultHandler handler = new SMSResultHandler();
@@ -304,6 +303,30 @@ public class DataInterface extends HttpServlet {
                     break;
                 }
                 //</editor-fold>
+                
+                //<editor-fold desc="UpdateCustomerDevice">
+                case "UpdateCustomerDevice": {
+                    CommonController controller = new CommonController();
+                    DatabaseOpt opt = new DatabaseOpt();
+                    JSONObject setObj = new JSONObject();
+                    setObj.put("isLocked", paramsJson.getIntValue("isLocked"));
+                    JSONObject whereObj = new JSONObject();
+                    whereObj.put("loginUserName", curCustomer.getLoginUserName());
+                    whereObj.put("deviceID", paramsJson.getString("deviceID"));
+                    
+                    JSONArray updateAry = new JSONArray();
+                    updateAry.add(setObj);
+                    updateAry.add(whereObj);
+                    int result = controller.dataBaseOperate(updateAry.toJSONString(), "com.cn.bean.", "CustomerDevice", "update", opt.getConnect()).get(0);
+                    String messageType = (paramsJson.getIntValue("isLocked") == 1) ? ("设防") : ("撤防");
+                    if (result == 0) {
+                        json = Units.objectToJson(0, messageType + "成功!", null);
+                    } else {
+                        json = Units.objectToJson(0, messageType + "失败!", null);
+                    }
+                    break;
+                }
+                //</editor-fold>
 
                 //<editor-fold desc="LoadUserVehicles">
                 case "LoadUserVehicles": {
@@ -366,6 +389,7 @@ public class DataInterface extends HttpServlet {
                     String sendBody = "method=LoadHistoryData&Sys=" + paramsJson.getString("systemNo") + "&btime=" + paramsJson.getString("start") + "&etime=" + paramsJson.getString("end");
                     //String sendBody = "method=LoadHistoryData&Sys=" + paramsJson.getString("systemNo") + "&btime=2017-01-0120%12:12&etime=2017-01-0220%11:11";
                     json = Units.requestWithNoHeaderKey(curCustomer.getCustomerGPSServerUrl() + "gpsapi.ashx", sendBody);
+                    //System.out.println("json:" + json);
                     json = Units.objectToJson(0, "", json);
                     break;
                 }
@@ -380,6 +404,18 @@ public class DataInterface extends HttpServlet {
                         lnglat[i] = object.getString("lng") + "," + object.getString("lat");
                     }
                     json = Units.objectToJson(0, "", Units.getBaiduLnglatConvert(lnglat, 1));
+                    break;
+                }
+                //</editor-fold>
+                
+                //<editor-fold desc="reverseLatLng">
+                case "reverseLatLng": {
+                    JSONObject point = JSONObject.parseObject(paramsJson.getString("point"));
+                    String address = Units.getBaiduRenderReverse(point.getString("lat") + "," + point.getString("lng"), point.getString("coordType"));
+                    JSONObject addObj = JSONObject.parseObject(address);
+                    String addressStr = addObj.getJSONObject("result").getString("formatted_address") + "<br />"
+                            + addObj.getJSONObject("result").getString("sematic_description");
+                    json = Units.objectToJson(0, "", addressStr);
                     break;
                 }
                 //</editor-fold>

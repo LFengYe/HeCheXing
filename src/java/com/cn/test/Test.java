@@ -13,6 +13,7 @@ import com.cn.util.Units;
  * @author LFeng
  */
 public class Test {
+    /*
     public static void main(String[] args) {
         String loginUrl = "http://localhost:8880/RuiBangWuLiu/action.do";
         JSONObject loginParams = new JSONObject();
@@ -33,4 +34,5 @@ public class Test {
         params.put("isFinished", "1");
         System.out.println(Units.requestWithPost(httpUrl, params.toJSONString()));
     }
+    */
 }

@@ -8,6 +8,9 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black">
         <link href="css/mui.min.css" rel="stylesheet" />
+        <link href="css/mui.picker.css" rel="stylesheet" />
+        <link href="css/mui.poppicker.css" rel="stylesheet" />
+        <link href="css/mui.dtpicker.css" rel="stylesheet" />
 
         <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
         <script type="text/javascript" src="js/script.js"></script>
@@ -51,11 +54,11 @@
                     </form>
                     <div class="mui-input-row">
                         <label>开始时间:</label>
-                        <input type="date" name="startTime" id="startTime" disabled>
+                        <input type="datetime" name="startTime" id="startTime" value="2017-01-01" readonly>
                     </div>
                     <div class="mui-input-row">
                         <label>结束时间:</label>
-                        <input type="date" name="endTime" id="endTime" disabled>
+                        <input type="datetime" name="endTime" id="endTime" value="2017-01-01" readonly>
                     </div>
                 </div>
 
@@ -63,6 +66,9 @@
             </div>
         </div>
         <script src="js/mui.min.js"></script>
+        <script src="js/mui.picker.js"></script>
+        <script src="js/mui.poppicker.js"></script>
+        <script src="js/mui.dtpicker.js"></script>
         <script src="js/app.js"></script>
         <script type="text/javascript">
             mui.init({
@@ -72,19 +78,28 @@
                 var deviceId = getUrlParam('deviceId');
                 var startTime, endTime;
                 var checkedValue = 'today';
+                $("#startTime").val(getNowDateShort() + ' 00:00');
+                $("#endTime").val(getNowDateShort() + ' 23:59');
 
                 $(".mui-input-group").find('input[type=checkbox]').bind('click', function () {
                     $(".mui-input-group").find('input[type=checkbox]').not(this).attr("checked", false);
                     checkedValue = this.value;
                     if (checkedValue === 'customer') {
-                        $("#startTime").attr("disabled", false);
-                        $("#startTime").val(getNowDateShort() + ' 00:00:00');
-                        $("#endTime").attr("disabled", false);
-                        $("#endTime").val(getNowDateShort() + ' 23:59:59');
-                    } else {
-                        $("#startTime").attr("disabled", true);
-                        $("#endTime").attr("disabled", true);
+                        $("#startTime").val(getNowDateShort() + ' 00:00');
+                        $("#endTime").val(getNowDateShort() + ' 23:59');
                     }
+                });
+                doc.getElementById('startTime').addEventListener('tap', function(event) {
+                    var dtPicker = new mui.DtPicker();
+                    dtPicker.show(function(selectItems) {
+                        $("#startTime").val(selectItems.value);
+                    });
+                });
+                doc.getElementById('endTime').addEventListener('tap', function(event) {
+                    var dtPicker = new mui.DtPicker();
+                    dtPicker.show(function(selectItems) {
+                        $("#endTime").val(selectItems.value);
+                    });
                 });
                 doc.getElementById('query').addEventListener('tap', function (event) {
                     getDateValue(checkedValue);

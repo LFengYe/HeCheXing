@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.cn.handler;
+package com.cn.xml.handler;
 
-import com.cn.bean.SMSResult;
+import com.cn.bean.xml.SMSResult;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -15,7 +15,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * @author LFeng
  */
 public class SMSResultHandler extends DefaultHandler{
-    //构建Student对象  
+    //构建SMSResult对象  
     private SMSResult result;  
     //用来存放每次遍历后的元素名称(节点名称)  
     private String tagName; 

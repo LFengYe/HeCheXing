@@ -78,6 +78,23 @@ public class Units {
     }
 
     /**
+     * 百度地址解析
+     *
+     * @param latlng
+     * @param coordType
+     * 坐标的类型，目前支持的坐标类型包括：bd09ll（百度经纬度坐标）、bd09mc（百度米制坐标）、gcj02ll（国测局经纬度坐标）、wgs84ll（
+     * GPS经纬度）
+     * @return
+     */
+    public static String getBaiduRenderReverse(String latlng, String coordType) {
+        String httpUrl = "http://api.map.baidu.com/geocoder/v2/";
+        String httpArg = "location=" + latlng;
+        httpArg += "&ak=" + BAIDU_CONVERT_KEY + "&output=json";
+        httpArg += "&pois=1&extensions_town=true&latest_admin=1&radius=500";
+        return requestWithNoHeaderKey(httpUrl, httpArg);
+    }
+    
+    /**
      * 根据身份证号获取身份信息
      *
      * @param idCardNO
@@ -194,7 +211,7 @@ public class Units {
         String result = null;
         StringBuilder sbf = new StringBuilder();
         httpUrl = httpUrl + "?" + httpArg;
-        System.out.println("httpUrl:" + httpUrl);
+        //System.out.println("httpUrl:" + httpUrl);
         try {
             URL url = new URL(httpUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -763,15 +780,16 @@ public class Units {
         }
         return json;
     }
-    
+
     /**
      * 发送设备绑定验证码
+     *
      * @param phone
      * @param userName
      * @param userPhone
      * @param deviceId
      * @param verifyCode
-     * @return 
+     * @return
      */
     public static String sendBandDeviceSMSCode(String phone, String userName, String userPhone, String deviceId, String verifyCode) {
         //初始化SDK

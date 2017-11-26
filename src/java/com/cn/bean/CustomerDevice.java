@@ -38,6 +38,8 @@ public class CustomerDevice {
     private String carNo;
     @FieldDescription(description = "绑定时间", operate = "input")
     private String bandTime;
+    @FieldDescription(description = "是否设防")
+    private int isLocked;
 
     public String getLoginUserName() {
         return loginUserName;
